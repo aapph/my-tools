@@ -13,10 +13,20 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 ### 🛠️ 核心日常管理命令
 ​安装完成后，在终端里使用以下命令进行日常维护：
 
-​核心五协议状态自检：
+安装成功后，想要**再次查看**或**复制**五个节点链接，直接登录 VPS 终端敲入：
+```bash
+show-nodes
+
+```
+​查看singbox底层运行状态：
 ```
 systemctl status sing-box
 
+```
+重启整个五协议矩阵与双隧道：
+```
+systemctl restart sing-box
+cloudflared cloudflared-zt
 ```
 ​零信任永久固定隧道状态：
 ```
