@@ -3,16 +3,15 @@ cat << 'EOF' > install_max_matrix.sh
 clear
 echo -e "\033[0;32m====== 正在部署：完美双栈 + 五协议矩阵 + 随时查看管理面板终极版 ======\033[0m"
 
-# 1. 引导用户输入 Token（支持直接回车跳过）
+# 1. 引导用户输入 Token
 echo -e "\033[0;33m⚠️  [可选] 请输入 CF Zero Trust 网页上的长 Token（如不使用固定隧道，请直接敲回车跳过）：\033[0m"
 read -p "👉 Token (可留空): " USER_TOKEN
 
-# 2. 引导用户输入固定域名（支持直接回车跳过）
+# 2. 引导用户输入固定域名
 echo -e ""
 echo -e "\033[0;33m⚠️  [可选] 请输入绑定的固定二级域名（如不使用固定隧道，请直接敲回车跳过）：\033[0m"
 read -p "👉 域名 (可留空): " USER_DOMAIN
 
-# 状态标记：判断用户是否启用了固定隧道
 if [ -n "$USER_TOKEN" ] && [ -n "$USER_DOMAIN" ]; then
     ENABLE_ZT=true
     USER_DOMAIN=$(echo "$USER_DOMAIN" | tr -d ' ')
@@ -58,14 +57,13 @@ fi
 
 openssl req -x509 -nodes -newkey rsa:2048 -keyout /etc/sing-box/server.key -out /etc/sing-box/server.crt -subj "/CN=www.microsoft.com" -days 36500 2>/dev/null
 
-# 将生成的关键元数据固化到本地，供后期 show-nodes 随时调用
-cat << EOF > /etc/sing-box/meta_env.sh
+cat << METEOF > /etc/sing-box/meta_env.sh
 PUB_KEY="${PUB_KEY}"
 SUID="${SUID}"
 RANDOM_PATH="${RANDOM_PATH}"
 ENABLE_ZT="${ENABLE_ZT}"
 USER_DOMAIN="${USER_DOMAIN}"
-EOF
+METEOF
 
 # 6. 灌入五协议配置
 echo -e "\033[0;33m[2/4] 正在写入内核五协议矩阵配置...\033[0m"
@@ -170,9 +168,7 @@ fi
 echo -e "\033[0;33m⏳ 正在等待 Cloudflare 分配边缘测试隧道，大约需要 5-8 秒...\033[0m"
 sleep 7
 
-# =========================================================================
-# 🌟 核心大招：动态生成独立查看面板脚本，并注册为系统全局命令 show-nodes
-# =========================================================================
+# 9. 动态生成独立面板脚本
 cat << 'PANELDATA' > /usr/local/bin/show-nodes
 #!/bin/bash
 if [ ! -f /etc/sing-box/config.json ] || [ ! -f /etc/sing-box/meta_env.sh ]; then
@@ -180,10 +176,7 @@ if [ ! -f /etc/sing-box/config.json ] || [ ! -f /etc/sing-box/meta_env.sh ]; the
     exit 1
 fi
 
-# 加载元数据环境
 source /etc/sing-box/meta_env.sh
-
-# 实时提取核心当前的动态数据
 UUID=$(jq -r '.inbounds[0].users[0].uuid' /etc/sing-box/config.json)
 IP4=$(curl -s -4 ip.sb || curl -s -4 ifconfig.me)
 IP6=$(curl -s -6 ip.sb || curl -s -6 ifconfig.me 2>/dev/null)
@@ -254,10 +247,7 @@ fi
 echo -e "=================================================="
 PANELDATA
 
-# 赋予查看脚本全局执行权限
 chmod +x /usr/local/bin/show-nodes
-
-# 安装完成直接首次呼出面板
 show-nodes
 EOF
 chmod +x install_max_matrix.sh
