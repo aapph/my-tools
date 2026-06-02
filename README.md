@@ -13,7 +13,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 ### 🛠️ 核心日常管理命令
 ​安装完成后，在终端里使用以下命令进行日常维护：
 
-安装成功后，想要**再次查看**或**复制**五个节点链接，直接登录 VPS 终端敲入：
+想要**再次查看**或**复制**五个节点链接，直接登录 VPS 终端敲入：
 ```bash
 show-nodes
 
