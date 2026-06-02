@@ -7,12 +7,12 @@
 
 ### 🇨🇳 国内/全网 CDN 加速拉起
 ```bash
-bash <(curl -Ls (https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
+bash <(curl -Ls https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh)
 ```
 ---
 ### 🌐 国际直连拉起
 ```bash
-bash <(curl -Ls (https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
+bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh)
 
 ```
 ---
@@ -42,4 +42,4 @@ systemctl restart sing-box cloudflared cloudflared-zt
 ---
 ### 🧹 一键卸载脚本
 ```bash
-bash <(curl -Ls (https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh))
+bash <(curl -Ls https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh)
