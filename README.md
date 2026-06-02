@@ -3,7 +3,7 @@
 
 ---
 ### 🚀 一键安装脚本
-选择以下任意一行命令，直接复制并在新 VPS 终端（Root 用户）中运行即可：
+直接复制命令并在VPS 终端（Root 用户）中运行即可：
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh)
