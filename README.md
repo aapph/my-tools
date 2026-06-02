@@ -28,7 +28,7 @@ systemctl status sing-box
 systemctl status cloudflared-zt
 
 ```
-​临时测试隧道状态监控：
+​临时测试隧道状态：
 ```
 systemctl status cloudflared
 
