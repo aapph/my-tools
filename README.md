@@ -42,4 +42,4 @@ systemctl restart sing-box cloudflared cloudflared-zt
 ---
 ### 🧹 一键卸载脚本
 ```bash
-bash <(curl -Ls https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh)
