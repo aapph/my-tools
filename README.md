@@ -18,6 +18,11 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 show-nodes
 
 ```
+修改节点端口或修改固定隧道域名，VPS终端敲入：
+```
+port
+
+```
 ​查看singbox底层运行状态：
 ```
 systemctl status sing-box
