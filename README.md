@@ -11,13 +11,13 @@
 ### 🇨🇳 国内/全网 CDN 加速拉起（强推，1秒秒下）
 ```bash
 bash <(curl -Ls [https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh](https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
-
+```
 ---
 
 ### 🌐 国际直连拉起（海外小鸡直连）
 ```bash
 bash <(curl -Ls [https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh](https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
-
+```
 ---
 ### 🛠️ 核心日常管理命令
 ​安装完成后，在终端里使用以下命令进行日常维护：
@@ -30,3 +30,4 @@ bash <(curl -Ls [https://raw.githubusercontent.com/aapph/my-tools/refs/heads/mai
 ​### 🧹 一键卸载脚本
 ```bash
 bash <(curl -Ls [https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh](https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh))
+```
