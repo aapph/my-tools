@@ -5,12 +5,12 @@
 ### 🚀 一键安装脚本
 选择以下任意一行命令，直接复制并在新 VPS 终端（Root 用户）中运行即可：
 
-### 🇨🇳 国内/全网 CDN 加速拉起（强推，1秒秒下）
+### 🇨🇳 国内/全网 CDN 加速拉起
 ```bash
 bash <(curl -Ls (https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
 ```
 ---
-### 🌐 国际直连拉起（海外小鸡直连）
+### 🌐 国际直连拉起
 ```bash
 bash <(curl -Ls (https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
 ```
