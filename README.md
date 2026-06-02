@@ -8,6 +8,7 @@
 ### 🇨🇳 国内/全网 CDN 加速拉起
 ```bash
 bash <(curl -Ls (https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
+```
 ---
 ### 🌐 国际直连拉起
 ```bash
