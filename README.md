@@ -2,7 +2,7 @@
 本项目包含经过骨灰级调优的**完美双栈 + 五协议矩阵 + 临时/固定双隧道共存**完全体一键脚本。专为低配 VPS（如 AWS 免费小鸡）打造，轻量、稳定、极度隐蔽。
 
 ---
-### 🚀 一键安装脚本
+### 🚀 一键五协议安装脚本
 直接复制命令并在VPS 终端（Root 用户）中运行即可：
 
 ```bash
@@ -34,6 +34,6 @@ systemctl restart sing-box cloudflared cloudflared-zt
 
 ```
 ---
-### 🧹 一键卸载脚本
+### 🧹 一键五协议卸载脚本
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh)
