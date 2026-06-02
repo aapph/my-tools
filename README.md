@@ -14,7 +14,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 ​安装完成后，在终端里使用以下命令进行日常维护：
 
 想要**再次查看**或**复制**五个节点链接，直接登录 VPS 终端敲入：
-```bash
+```
 show-nodes
 
 ```
@@ -22,11 +22,6 @@ show-nodes
 ```
 systemctl status sing-box
 
-```
-重启整个五协议矩阵与双隧道：
-```
-systemctl restart sing-box
-cloudflared cloudflared-zt
 ```
 ​零信任永久固定隧道状态：
 ```
