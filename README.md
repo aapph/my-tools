@@ -47,3 +47,12 @@ systemctl restart sing-box cloudflared cloudflared-zt
 ### 🧹 一键五协议卸载脚本
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh)
+
+```
+---
+### 🚀 一键升级singbox内核脚本
+singbox默认内核版本v1.9.3，足以满足本人需求。升级内核不保证可用，因没测试过。如需升级，自行测试。
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/update_singbox.sh)
+
