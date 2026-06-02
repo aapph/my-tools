@@ -4,10 +4,8 @@
 ---
 ### 🚀 一键五协议安装脚本
 直接复制命令并在VPS 终端（Root 用户）中运行即可：
-
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh)
-
 ```
 ---
 ### 🛠️ 核心日常管理命令
@@ -16,38 +14,31 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 想要**再次查看**或**复制**五个节点链接，直接登录 VPS 终端敲入：
 ```
 show-nodes
-
 ```
 修改节点端口或修改固定隧道域名，VPS终端敲入：
 ```
 port
-
 ```
 ​查看singbox底层运行状态：
 ```
 systemctl status sing-box
-
 ```
 ​零信任永久固定隧道状态：
 ```
 systemctl status cloudflared-zt
-
 ```
 ​临时测试隧道状态：
 ```
 systemctl status cloudflared
-
 ```
 ​一键重启整个网络矩阵：
 ```
 systemctl restart sing-box cloudflared cloudflared-zt
-
 ```
 ---
 ### 🧹 一键五协议卸载脚本
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh)
-
 ```
 ---
 ### 🚀 一键升级singbox内核脚本
