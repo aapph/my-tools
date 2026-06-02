@@ -17,6 +17,7 @@ bash <(curl -Ls (https://raw.githubusercontent.com/aapph/my-tools/refs/heads/mai
 ---
 ### 🛠️ 核心日常管理命令
 ​安装完成后，在终端里使用以下命令进行日常维护：
+
 ​核心五协议状态自检：
 ```
 systemctl status sing-box
