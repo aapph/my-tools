@@ -1,7 +1,7 @@
 cat << 'EOF' > install_max_matrix.sh
 #!/bin/bash
 clear
-echo -e "\033[0;32m====== 正在部署：完美双栈 + 五协议矩阵 + 智能弹性双隧道一键脚本 ======\033[0m"
+echo -e "\033[0;32m====== 正在部署：完美双栈 + 五协议矩阵 + 随时查看管理面板终极版 ======\033[0m"
 
 # 1. 引导用户输入 Token（支持直接回车跳过）
 echo -e "\033[0;33m⚠️  [可选] 请输入 CF Zero Trust 网页上的长 Token（如不使用固定隧道，请直接敲回车跳过）：\033[0m"
@@ -21,7 +21,7 @@ else
     ENABLE_ZT=false
     echo -e "\033[0;36m💡 检测到参数留空，已自动切换为【仅拉起 Argo 临时测试隧道】模式！\033[0m"
 fi
-sleep 2
+sleep 1
 
 # 3. 自动补齐基础依赖与纯净 DNS
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
@@ -57,6 +57,15 @@ if [ -z "$PRIV_KEY" ]; then
 fi
 
 openssl req -x509 -nodes -newkey rsa:2048 -keyout /etc/sing-box/server.key -out /etc/sing-box/server.crt -subj "/CN=www.microsoft.com" -days 36500 2>/dev/null
+
+# 将生成的关键元数据固化到本地，供后期 show-nodes 随时调用
+cat << EOF > /etc/sing-box/meta_env.sh
+PUB_KEY="${PUB_KEY}"
+SUID="${SUID}"
+RANDOM_PATH="${RANDOM_PATH}"
+ENABLE_ZT="${ENABLE_ZT}"
+USER_DOMAIN="${USER_DOMAIN}"
+EOF
 
 # 6. 灌入五协议配置
 echo -e "\033[0;33m[2/4] 正在写入内核五协议矩阵配置...\033[0m"
@@ -98,7 +107,7 @@ cat << JSONEOF > /etc/sing-box/config.json
 JSONEOF
 
 # 7. 拉起 sing-box 服务
-echo -e "\033[0;33m[3/4] 正在拉起系统四大核心独立端口进程...\033[0m"
+echo -e "\033[0;33m[3/4] 正在拉起系统五协议核心进程...\033[0m"
 cat << SVCEOF > /etc/systemd/system/sing-box.service
 [Unit]
 Description=sing-box service
@@ -115,13 +124,12 @@ SVCEOF
 
 systemctl daemon-reload && systemctl restart sing-box && systemctl enable sing-box
 
-# 8. 弹性部署内核隧道
-echo -e "\033[0;33m[4/4] 正在配置 Cloudflare 隧道连接器...\033[0m"
+# 8. 弹性部署网络隧道
+echo -e "\033[0;33m[4/4] 正在配置 Cloudflare 核心隧道连接器...\033[0m"
 rm -f /usr/local/bin/cloudflared
 wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O /usr/local/bin/cloudflared
 chmod +x /usr/local/bin/cloudflared
 
-# 无论如何，临时测试隧道（A轨）是一定要拉起的
 cat << CLOUDFLAREDEOF > /etc/systemd/system/cloudflared.service
 [Unit]
 Description=cloudflare try tunnel
@@ -134,11 +142,8 @@ RestartSec=10s
 WantedBy=multi-user.target
 CLOUDFLAREDEOF
 
-systemctl daemon-reload
-systemctl restart cloudflared
-systemctl enable cloudflared
+systemctl daemon-reload && systemctl restart cloudflared && systemctl enable cloudflared
 
-# 只有用户在开头输入了参数，才注册并拉起固定零信任服务（B轨）
 if [ "$ENABLE_ZT" = true ]; then
 cat << CLOUDFLAREDZTEOF > /etc/systemd/system/cloudflared-zt.service
 [Unit]
@@ -154,32 +159,45 @@ RestartSec=5s
 WantedBy=multi-user.target
 CLOUDFLAREDZTEOF
 
-    systemctl daemon-reload
-    systemctl restart cloudflared-zt
-    systemctl enable cloudflared-zt
+    systemctl daemon-reload && systemctl restart cloudflared-zt && systemctl enable cloudflared-zt
 else
-    # 如果用户选择不安装固定隧道，确保清理机器上可能残存的旧固定隧道服务
     systemctl stop cloudflared-zt 2>/dev/null
     systemctl disable cloudflared-zt 2>/dev/null
     rm -f /etc/systemd/system/cloudflared-zt.service
     systemctl daemon-reload
 fi
 
+echo -e "\033[0;33m⏳ 正在等待 Cloudflare 分配边缘测试隧道，大约需要 5-8 秒...\033[0m"
 sleep 7
 
-# 捕获临时测试隧道动态生成的泛域名
+# =========================================================================
+# 🌟 核心大招：动态生成独立查看面板脚本，并注册为系统全局命令 show-nodes
+# =========================================================================
+cat << 'PANELDATA' > /usr/local/bin/show-nodes
+#!/bin/bash
+if [ ! -f /etc/sing-box/config.json ] || [ ! -f /etc/sing-box/meta_env.sh ]; then
+    echo -e "\033[0;31m❌ 错误：未检测到完全体节点的安装环境，请先运行安装脚本！\033[0m"
+    exit 1
+fi
+
+# 加载元数据环境
+source /etc/sing-box/meta_env.sh
+
+# 实时提取核心当前的动态数据
+UUID=$(jq -r '.inbounds[0].users[0].uuid' /etc/sing-box/config.json)
+IP4=$(curl -s -4 ip.sb || curl -s -4 ifconfig.me)
+IP6=$(curl -s -6 ip.sb || curl -s -6 ifconfig.me 2>/dev/null)
 ARGO_URL=$(journalctl -u cloudflared -n 50 --no-pager | grep -oE "https://[a-zA-Z0-9.-]+\.trycloudflare\.com" | head -n 1)
 PORT_CHECK=$(ss -tulpn | grep sing-box)
 
-# 9. 智能动态渲染输出面板
 clear
 echo -e "\033[0;32m=================================================="
-echo -e "   👑 毁灭级满配：五协议双栈弹性部署脚本成功！   "
+echo -e "   👑 终极管理面板：当前 VPS 五协议双栈节点快照   "
 echo -e "==================================================\033[0m"
 if [ -n "$PORT_CHECK" ]; then
-    echo -e "核心监听状态: \033[0;32m正常开启 (8443, 9443, 10443, 11443, 8080双栈就位)\033[0m"
+    echo -e "核心监听状态: \033[0;32m正常开启 (8443, 9443, 10443, 11443, 8080 双栈全通)\033[0m"
 else
-    echo -e "核心监听状态: \033[0;31m端口异常，请放行安全组端口\033[0m"
+    echo -e "核心监听状态: \033[0;31m端口异常，请检查 sing-box.service 服务\033[0m"
 fi
 
 if [ "$ENABLE_ZT" = true ]; then
@@ -187,6 +205,7 @@ if [ "$ENABLE_ZT" = true ]; then
 else
     echo -e "网络隧道模式: \033[0;36m【单轨轻量】仅开启 Argo 临时测试穿透模式\033[0m"
 fi
+echo -e "💡 提示：以后随时在终端输入 \033[0;35mshow-nodes\033[0m 即可再次呼出此面板！"
 echo -e "--------------------------------------------------"
 echo -e "ℹ️  通用密码/UUID: \033[0;32m${UUID}\033[0m"
 echo -e "--------------------------------------------------"
@@ -216,7 +235,6 @@ fi
 echo -e ""
 echo -e "5️⃣  VMess 隧道节点输出区："
 
-# 根据用户的配置，动态渲染 VMess 节点的展示
 if [ "$ENABLE_ZT" = true ]; then
     VMESS_FIXED_JSON="{\"v\":\"2\",\"ps\":\"Argo-零信任固定隧道\",\"add\":\"${USER_DOMAIN}\",\"port\":\"443\",\"id\":\"${UUID}\",\"aid\":\"0\",\"scy\":\"auto\",\"net\":\"ws\",\"type\":\"none\",\"host\":\"${USER_DOMAIN}\",\"path\":\"${RANDOM_PATH}\",\"tls\":\"tls\"}"
     VMESS_FIXED_LINK="vmess://$(echo -n "${VMESS_FIXED_JSON}" | base64 -w 0)"
@@ -231,9 +249,16 @@ if [ -n "$ARGO_URL" ]; then
     echo -e " 👉 【⚡ Argo 临时测试链接（重启机器失效备用）】"
     echo -e "     \033[0;36m${VMESS_TRY_LINK}\033[0m"
 else
-    echo -e " ❌ 提示：Cloudflare 临时穿透失败，请检查机器是否能直连 trycloudflare.com"
+    echo -e " ❌ 提示：Cloudflare 临时穿透失败，可能由于本地机房请求频繁死锁"
 fi
 echo -e "=================================================="
+PANELDATA
+
+# 赋予查看脚本全局执行权限
+chmod +x /usr/local/bin/show-nodes
+
+# 安装完成直接首次呼出面板
+show-nodes
 EOF
 chmod +x install_max_matrix.sh
 ./install_max_matrix.sh
