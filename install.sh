@@ -1,25 +1,49 @@
 cat << 'EOF' > install_max_matrix.sh
 #!/bin/bash
 clear
-echo -e "\033[0;32m====== 正在部署：完美双栈 + 五协议矩阵 + 随时查看管理面板终极版 ======\033[0m"
+echo -e "\033[0;32m==================================================================\033[0m"
+echo -e "\033[0;32m👑 终极大满配：五协议矩阵 + 弹性双隧道 + 端口/域名双控制面板完全体 👑\033[0m"
+echo -e "\033[0;32m==================================================================\033[0m"
 
-# 1. 引导用户输入 Token
-echo -e "\033[0;33m⚠️  [可选] 请输入 CF Zero Trust 网页上的长 Token（如不使用固定隧道，请直接敲回车跳过）：\033[0m"
+# 1. 引导用户输入 Token 和域名（支持直接回车跳过）
+echo -e "\033[0;33m⚠️  [可选] 请输入 CF Zero Trust 网页上的长 Token（不使用固定隧道请直接回车）：\033[0m"
 read -p "👉 Token (可留空): " USER_TOKEN
 
-# 2. 引导用户输入固定域名
 echo -e ""
-echo -e "\033[0;33m⚠️  [可选] 请输入绑定的固定二级域名（如不使用固定隧道，请直接敲回车跳过）：\033[0m"
+echo -e "\033[0;33m⚠️  [可选] 请输入绑定的固定二级域名（不使用固定隧道请直接回车）：\033[0m"
 read -p "👉 域名 (可留空): " USER_DOMAIN
 
 if [ -n "$USER_TOKEN" ] && [ -n "$USER_DOMAIN" ]; then
     ENABLE_ZT=true
     USER_DOMAIN=$(echo "$USER_DOMAIN" | tr -d ' ')
-    echo -e "\033[0;32m✅ 检测到有效参数，本次安装将开启【临时+固定】双重隧道模式！\033[0m"
+    echo -e "\033[0;32m✅ 本次安装将开启【临时+固定】双重隧道模式！\033[0m"
 else
     ENABLE_ZT=false
-    echo -e "\033[0;36m💡 检测到参数留空，已自动切换为【仅拉起 Argo 临时测试隧道】模式！\033[0m"
+    echo -e "\033[0;36m💡 已自动切换为【仅拉起 Argo 临时测试隧道】模式！\033[0m"
 fi
+sleep 1
+
+# 2. 交互式自定义节点端口（回车即用默认值）
+echo -e "\n\033[0;32m--------------------------------------------------\033[0m"
+echo -e "\033[0;32m🛠️  自定义端口配置区（直接回车即使用默认经典端口）：\033[0m"
+echo -e "\033[0;32m--------------------------------------------------\033[0m"
+
+read -p "👉 1. VLESS Reality 端口 (默认: 8443): " PORT_VLESS
+PORT_VLESS=${PORT_VLESS:-8443}
+
+read -p "👉 2. Hysteria 2 端口 (默认: 9443): " PORT_HY2
+PORT_HY2=${PORT_HY2:-9443}
+
+read -p "👉 3. TUIC v5 端口 (默认: 10443): " PORT_TUIC
+PORT_TUIC=${PORT_TUIC:-10443}
+
+read -p "👉 4. Trojan 端口 (默认: 11443): " PORT_TROJAN
+PORT_TROJAN=${PORT_TROJAN:-11443}
+
+read -p "👉 5. VMess 本地转发端口 (默认: 8080): " PORT_VMESS
+PORT_VMESS=${PORT_VMESS:-8080}
+
+echo -e "\n\033[0;32m✅ 端口矩阵已锁定：VLESS($PORT_VLESS) | Hy2($PORT_HY2) | TUIC($PORT_TUIC) | Trojan($PORT_TROJAN) | VMess本地($PORT_VMESS)\033[0m"
 sleep 1
 
 # 3. 自动补齐基础依赖与纯净 DNS
@@ -57,22 +81,29 @@ fi
 
 openssl req -x509 -nodes -newkey rsa:2048 -keyout /etc/sing-box/server.key -out /etc/sing-box/server.crt -subj "/CN=www.microsoft.com" -days 36500 2>/dev/null
 
+# 将自定义端口、Token和元数据固化到本地，供后期面板随时提取修改
 cat << METEOF > /etc/sing-box/meta_env.sh
 PUB_KEY="${PUB_KEY}"
 SUID="${SUID}"
 RANDOM_PATH="${RANDOM_PATH}"
 ENABLE_ZT="${ENABLE_ZT}"
 USER_DOMAIN="${USER_DOMAIN}"
+USER_TOKEN="${USER_TOKEN}"
+PORT_VLESS="${PORT_VLESS}"
+PORT_HY2="${PORT_HY2}"
+PORT_TUIC="${PORT_TUIC}"
+PORT_TROJAN="${PORT_TROJAN}"
+PORT_VMESS="${PORT_VMESS}"
 METEOF
 
-# 6. 灌入五协议配置
+# 6. 灌入自定义端口的五协议配置
 echo -e "\033[0;33m[2/4] 正在写入内核五协议矩阵配置...\033[0m"
 cat << JSONEOF > /etc/sing-box/config.json
 {
   "log": { "level": "warn" },
   "inbounds": [
     {
-      "type": "vless", "tag": "vless-reality-in", "listen": "::", "listen_port": 8443,
+      "type": "vless", "tag": "vless-reality-in", "listen": "::", "listen_port": ${PORT_VLESS},
       "users": [ { "uuid": "${UUID}", "flow": "xtls-rprx-vision" } ],
       "tls": {
         "enabled": true, "server_name": "www.microsoft.com",
@@ -80,22 +111,22 @@ cat << JSONEOF > /etc/sing-box/config.json
       }
     },
     {
-      "type": "hysteria2", "tag": "hy2-in", "listen": "::", "listen_port": 9443,
+      "type": "hysteria2", "tag": "hy2-in", "listen": "::", "listen_port": ${PORT_HY2},
       "users": [ { "password": "${UUID}" } ],
       "tls": { "enabled": true, "certificate_path": "/etc/sing-box/server.crt", "key_path": "/etc/sing-box/server.key" }
     },
     {
-      "type": "tuic", "tag": "tuic5-in", "listen": "::", "listen_port": 10443,
+      "type": "tuic", "tag": "tuic5-in", "listen": "::", "listen_port": ${PORT_TUIC},
       "users": [ { "uuid": "${UUID}", "password": "${UUID}" } ],
       "tls": { "enabled": true, "server_name": "www.microsoft.com", "certificate_path": "/etc/sing-box/server.crt", "key_path": "/etc/sing-box/server.key" }
     },
     {
-      "type": "trojan", "tag": "trojan-in", "listen": "::", "listen_port": 11443,
+      "type": "trojan", "tag": "trojan-in", "listen": "::", "listen_port": ${PORT_TROJAN},
       "users": [ { "password": "${UUID}" } ],
       "tls": { "enabled": true, "server_name": "www.microsoft.com", "certificate_path": "/etc/sing-box/server.crt", "key_path": "/etc/sing-box/server.key" }
     },
     {
-      "type": "vmess", "tag": "vmess-ws-in", "listen": "::", "listen_port": 8080,
+      "type": "vmess", "tag": "vmess-ws-in", "listen": "::", "listen_port": ${PORT_VMESS},
       "users": [ { "uuid": "${UUID}" } ],
       "transport": { "type": "ws", "path": "${RANDOM_PATH}" }
     }
@@ -104,7 +135,7 @@ cat << JSONEOF > /etc/sing-box/config.json
 }
 JSONEOF
 
-# 7. 拉起 sing-box 服务
+# 7. 注册并拉起 sing-box 服务
 echo -e "\033[0;33m[3/4] 正在拉起系统五协议核心进程...\033[0m"
 cat << SVCEOF > /etc/systemd/system/sing-box.service
 [Unit]
@@ -133,7 +164,7 @@ cat << CLOUDFLAREDEOF > /etc/systemd/system/cloudflared.service
 Description=cloudflare try tunnel
 After=network.target
 [Service]
-ExecStart=/usr/local/bin/cloudflared tunnel --url http://localhost:8080
+ExecStart=/usr/local/bin/cloudflared tunnel --url http://localhost:${PORT_VMESS}
 Restart=on-failure
 RestartSec=10s
 [Install]
@@ -168,14 +199,15 @@ fi
 echo -e "\033[0;33m⏳ 正在等待 Cloudflare 分配边缘测试隧道，大约需要 5-8 秒...\033[0m"
 sleep 7
 
-# 9. 动态生成独立面板脚本
+# =========================================================================
+# 🌟 大招一：【随时查看面板】常驻脚本注册全局命令 show-nodes
+# =========================================================================
 cat << 'PANELDATA' > /usr/local/bin/show-nodes
 #!/bin/bash
 if [ ! -f /etc/sing-box/config.json ] || [ ! -f /etc/sing-box/meta_env.sh ]; then
     echo -e "\033[0;31m❌ 错误：未检测到完全体节点的安装环境，请先运行安装脚本！\033[0m"
     exit 1
 fi
-
 source /etc/sing-box/meta_env.sh
 UUID=$(jq -r '.inbounds[0].users[0].uuid' /etc/sing-box/config.json)
 IP4=$(curl -s -4 ip.sb || curl -s -4 ifconfig.me)
@@ -188,13 +220,14 @@ echo -e "\033[0;32m=================================================="
 echo -e "   👑 终极管理面板：当前 VPS 五协议双栈节点快照   "
 echo -e "==================================================\033[0m"
 if [ -n "$PORT_CHECK" ]; then
-    echo -e "核心监听状态: \033[0;32m正常开启 (8443, 9443, 10443, 11443, 8080 双栈全通)\033[0m"
+    echo -e "核心监听状态: \033[0;32m正常开启 (${PORT_VLESS}, ${PORT_HY2}, ${PORT_TUIC}, ${PORT_TROJAN}, ${PORT_VMESS} 双栈全通)\033[0m"
 else
     echo -e "核心监听状态: \033[0;31m端口异常，请检查 sing-box.service 服务\033[0m"
 fi
 
 if [ "$ENABLE_ZT" = true ]; then
     echo -e "网络隧道模式: \033[0;32m【双轨齐飞】临时穿透 + 零信任固定后台托管中\033[0m"
+    echo -e "当前固定域名: \033[0;35m${USER_DOMAIN}\033[0m"
 else
     echo -e "网络隧道模式: \033[0;36m【单轨轻量】仅开启 Argo 临时测试穿透模式\033[0m"
 fi
@@ -203,27 +236,27 @@ echo -e "--------------------------------------------------"
 echo -e "ℹ️  通用密码/UUID: \033[0;32m${UUID}\033[0m"
 echo -e "--------------------------------------------------"
 echo -e "1️⃣  VLESS Reality 节点:"
-echo -e " 👉 IPv4: \033[0;33mvless://${UUID}@${IP4}:8443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v4-Reality\033[0m"
+echo -e " 👉 IPv4: \033[0;33mvless://${UUID}@${IP4}:${PORT_VLESS}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v4-Reality\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mvless://${UUID}@[${IP6}]:8443?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v6-Reality\033[0m"
+echo -e " 👉 IPv6: \033[0;33mvless://${UUID}@[${IP6}]:${PORT_VLESS}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v6-Reality\033[0m"
 fi
 echo -e ""
 echo -e "2️⃣  Hysteria 2 节点:"
-echo -e " 👉 IPv4: \033[0;33mhy2://${UUID}@${IP4}:9443?insecure=1&sni=www.microsoft.com#Max-v4-Hy2\033[0m"
+echo -e " 👉 IPv4: \033[0;33mhy2://${UUID}@${IP4}:${PORT_HY2}?insecure=1&sni=www.microsoft.com#Max-v4-Hy2\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mhy2://${UUID}@[${IP6}]:9443?insecure=1&sni=www.microsoft.com#Max-v6-Hy2\033[0m"
+echo -e " 👉 IPv6: \033[0;33mhy2://${UUID}@[${IP6}]:${PORT_HY2}?insecure=1&sni=www.microsoft.com#Max-v6-Hy2\033[0m"
 fi
 echo -e ""
 echo -e "3️⃣  TUIC v5 节点 (客户端清空 ALPN):"
-echo -e " 👉 IPv4: \033[0;33mtuic://${UUID}:${UUID}@${IP4}:10443?congestion_control=bbr&sni=www.microsoft.com&allow_insecure=1#Max-v4-TUIC5\033[0m"
+echo -e " 👉 IPv4: \033[0;33mtuic://${UUID}:${UUID}@${IP4}:${PORT_TUIC}?congestion_control=bbr&sni=www.microsoft.com&allow_insecure=1#Max-v4-TUIC5\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mtuic://${UUID}:${UUID}@[${IP6}]:10443?congestion_control=bbr&sni=www.microsoft.com&allow_insecure=1#Max-v6-TUIC5\033[0m"
+echo -e " 👉 IPv6: \033[0;33mtuic://${UUID}:${UUID}@[${IP6}]:${PORT_TUIC}?congestion_control=bbr&sni=www.microsoft.com&allow_insecure=1#Max-v6-TUIC5\033[0m"
 fi
 echo -e ""
 echo -e "4️⃣  Trojan 节点 (客户端清空 ALPN 且允许不安全证书):"
-echo -e " 👉 IPv4: \033[0;33mtrojan://${UUID}@${IP4}:11443?peer=www.microsoft.com&sni=www.microsoft.com&allowInsecure=1#Max-v4-Trojan\033[0m"
+echo -e " 👉 IPv4: \033[0;33mtrojan://${UUID}@${IP4}:${PORT_TROJAN}?peer=www.microsoft.com&sni=www.microsoft.com&allowInsecure=1#Max-v4-Trojan\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mtrojan://${UUID}@[${IP6}]:11443?peer=www.microsoft.com&sni=www.microsoft.com&allowInsecure=1#Max-v6-Trojan\033[0m"
+echo -e " 👉 IPv6: \033[0;33mtrojan://${UUID}@[${IP6}]:${PORT_TROJAN}?peer=www.microsoft.com&sni=www.microsoft.com&allowInsecure=1#Max-v6-Trojan\033[0m"
 fi
 echo -e ""
 echo -e "5️⃣  VMess 隧道节点输出区："
@@ -246,8 +279,162 @@ else
 fi
 echo -e "=================================================="
 PANELDATA
-
 chmod +x /usr/local/bin/show-nodes
+
+# =========================================================================
+# 🌟 大招二：【控制台 2.0 满配版】常驻脚本注册全局命令 port (支持改端口+改域名+改Token)
+# =========================================================================
+cat << 'PORTPANEL' > /usr/local/bin/port
+#!/bin/bash
+if [ ! -f /etc/sing-box/config.json ] || [ ! -f /etc/sing-box/meta_env.sh ]; then
+    echo -e "\033[0;31m❌ 错误：未检测到完全体节点环境，请先安装！\033[0m"
+    exit 1
+fi
+source /etc/sing-box/meta_env.sh
+clear
+echo -e "\033[0;32m=================================================="
+echo -e "   ⚙️  五协议矩阵 · 端口与隧道域名动态控制台       "
+echo -e "=================================================="
+echo -e "当前各协议及隧道配置快照："
+echo -e "  [1] VLESS Reality 端口 : \033[0;33m${PORT_VLESS}\033[0m"
+echo -e "  [2] Hysteria 2    端口 : \033[0;33m${PORT_HY2}\033[0m"
+echo -e "  [3] TUIC v5       端口 : \033[0;33m${PORT_TUIC}\033[0m"
+echo -e "  [4] Trojan        端口 : \033[0;33m${PORT_TROJAN}\033[0m"
+echo -e "  [5] VMess 本地转发 端口 : \033[0;33m${PORT_VMESS}\033[0m"
+echo -e "--------------------------------------------------"
+if [ "$ENABLE_ZT" = true ]; then
+echo -e "  [6] 🌐 修改固定隧道域名: \033[0;35m${USER_DOMAIN}\033[0m"
+echo -e "  [7] 🔑 修改固定隧道 Token: \033[0;35m(已隐藏)\033[0m"
+else
+echo -e "  [6] 🌐 激活并绑定固定隧道域名 (当前处于关闭状态)"
+echo -e "  [7] 🔑 现场贴入固定隧道 Token"
+fi
+echo -e "  [8] ❌ 放弃修改，直接退出"
+echo -e "==================================================\033[0m"
+read -p "👉 请输入你要调校的菜单编号 (1-8): " CHOICE
+
+case $CHOICE in
+    1)
+        read -p "👉 请输入全新的 VLESS 端口 (当前: ${PORT_VLESS}): " NEW_PORT
+        if [[ "$NEW_PORT" =~ ^[0-9]+$ ]]; then
+            sed -i "s/\"listen_port\": ${PORT_VLESS}/\"listen_port\": ${NEW_PORT}/g" /etc/sing-box/config.json
+            sed -i "s/PORT_VLESS=\"${PORT_VLESS}\"/PORT_VLESS=\"${NEW_PORT}\"/g" /etc/sing-box/meta_env.sh
+            echo -e "\033[0;32m✅ VLESS 端口已成功修改为 ${NEW_PORT}！\033[0m"
+            systemctl restart sing-box
+        fi
+        ;;
+    2)
+        read -p "👉 请输入全新的 Hysteria 2 端口 (当前: ${PORT_HY2}): " NEW_PORT
+        if [[ "$NEW_PORT" =~ ^[0-9]+$ ]]; then
+            sed -i "s/\"listen_port\": ${PORT_HY2}/\"listen_port\": ${NEW_PORT}/g" /etc/sing-box/config.json
+            sed -i "s/PORT_HY2=\"${PORT_HY2}\"/PORT_HY2=\"${NEW_PORT}\"/g" /etc/sing-box/meta_env.sh
+            echo -e "\033[0;32m✅ Hysteria 2 端口已成功修改为 ${NEW_PORT}！\033[0m"
+            systemctl restart sing-box
+        fi
+        ;;
+    3)
+        read -p "👉 请输入全新的 TUIC v5 端口 (当前: ${PORT_TUIC}): " NEW_PORT
+        if [[ "$NEW_PORT" =~ ^[0-9]+$ ]]; then
+            sed -i "s/\"listen_port\": ${PORT_TUIC}/\"listen_port\": ${NEW_PORT}/g" /etc/sing-box/config.json
+            sed -i "s/PORT_TUIC=\"${PORT_TUIC}\"/PORT_TUIC=\"${NEW_PORT}\"/g" /etc/sing-box/meta_env.sh
+            echo -e "\033[0;32m✅ TUIC v5 端口已成功修改为 ${NEW_PORT}！\033[0m"
+            systemctl restart sing-box
+        fi
+        ;;
+    4)
+        read -p "👉 请输入全新的 Trojan 端口 (当前: ${PORT_TROJAN}): " NEW_PORT
+        if [[ "$NEW_PORT" =~ ^[0-9]+$ ]]; then
+            sed -i "s/\"listen_port\": ${PORT_TROJAN}/\"listen_port\": ${NEW_PORT}/g" /etc/sing-box/config.json
+            sed -i "s/PORT_TROJAN=\"${PORT_TROJAN}\"/PORT_TROJAN=\"${NEW_PORT}\"/g" /etc/sing-box/meta_env.sh
+            echo -e "\033[0;32m✅ Trojan 端口已成功修改为 ${NEW_PORT}！\033[0m"
+            systemctl restart sing-box
+        fi
+        ;;
+    5)
+        read -p "👉 请输入全新的 VMess 本地转发端口 (当前: ${PORT_VMESS}): " NEW_PORT
+        if [[ "$NEW_PORT" =~ ^[0-9]+$ ]]; then
+            sed -i "s/\"listen_port\": ${PORT_VMESS}/\"listen_port\": ${NEW_PORT}/g" /etc/sing-box/config.json
+            sed -i "s/PORT_VMESS=\"${PORT_VMESS}\"/PORT_VMESS=\"${NEW_PORT}\"/g" /etc/sing-box/meta_env.sh
+            sed -i "s/http:\/\/localhost:${PORT_VMESS}/http:\/\/localhost:${NEW_PORT}/g" /etc/systemd/system/cloudflared.service
+            systemctl daemon-reload && systemctl restart cloudflared sing-box
+            echo -e "\033[0;32m✅ VMess 端口及 Argo 临时隧道已无缝对齐同步修改！\033[0m"
+        fi
+        ;;
+    6)
+        # 🌐 手术刀修改固定域名（即使以前是跳过模式也能在这里直接激活）
+        read -p "👉 请输入你全新的固定二级域名 (例如: newvmes.yourdomain.com): " NEW_DOMAIN
+        if [ -n "$NEW_DOMAIN" ]; then
+            NEW_DOMAIN=$(echo "$NEW_DOMAIN" | tr -d ' ')
+            sed -i "s/USER_DOMAIN=\"${USER_DOMAIN}\"/USER_DOMAIN=\"${NEW_DOMAIN}\"/g" /etc/sing-box/meta_env.sh
+            sed -i "s/ENABLE_ZT=\"false\"/ENABLE_ZT=\"true\"/g" /etc/sing-box/meta_env.sh
+            echo -e "\033[0;32m✅ 固定域名已在元数据中同步更改！\033[0m"
+            
+            # 判断并热更新或创建固定隧道系统服务
+            source /etc/sing-box/meta_env.sh
+            if [ -n "$USER_TOKEN" ]; then
+cat << CLOUDFLAREDZTEOF > /etc/systemd/system/cloudflared-zt.service
+[Unit]
+Description=cloudflare zero trust tunnel
+After=network.target
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/cloudflared tunnel --no-autoupdate run --token ${USER_TOKEN}
+Restart=on-failure
+RestartSec=5s
+[Install]
+WantedBy=multi-user.target
+CLOUDFLAREDZTEOF
+                systemctl daemon-reload && systemctl restart cloudflared-zt && systemctl enable cloudflared-zt
+                echo -e "\033[0;32m✅ 零信任固定隧道后台服务已热启动！\033[0m"
+            else
+                echo -e "\033[0;33mℹ️  提示：域名已设好，但由于你没输 Token，请返回菜单按 [7] 填入 Token 激活隧道！\033[0m"
+            fi
+        fi
+        ;;
+    7)
+        # 🔑 手术刀修改或者现场补充 Token
+        read -p "👉 请粘贴你全新的 Cloudflare 零信任长 Token: " NEW_TOKEN
+        if [ -n "$NEW_TOKEN" ]; then
+            NEW_TOKEN=$(echo "$NEW_TOKEN" | tr -d ' ')
+            # 使用特殊的分隔符防止 Token 内部有斜杠导致 sed 瘫痪
+            sed -i "s|USER_TOKEN=\"${USER_TOKEN}\"|USER_TOKEN=\"${NEW_TOKEN}\"|g" /etc/sing-box/meta_env.sh
+            echo -e "\033[0;32m✅ Token 密钥已在后台安全重置！\033[0m"
+            
+            source /etc/sing-box/meta_env.sh
+            if [ -n "$USER_DOMAIN" ] && [ "$USER_DOMAIN" != " " ]; then
+                sed -i "s/ENABLE_ZT=\"false\"/ENABLE_ZT=\"true\"/g" /etc/sing-box/meta_env.sh
+cat << CLOUDFLAREDZTEOF > /etc/systemd/system/cloudflared-zt.service
+[Unit]
+Description=cloudflare zero trust tunnel
+After=network.target
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/cloudflared tunnel --no-autoupdate run --token ${NEW_TOKEN}
+Restart=on-failure
+RestartSec=5s
+[Install]
+WantedBy=multi-user.target
+CLOUDFLAREDZTEOF
+                systemctl daemon-reload && systemctl restart cloudflared-zt && systemctl enable cloudflared-zt
+                echo -e "\033[0;32m✅ 零信任固定隧道已使用新 Token 全力冲锋！\033[0m"
+            else
+                echo -e "\033[0;33mℹ️  提示：Token 已存入，请返回菜单按 [6] 绑定二级域名以彻底激活！\033[0m"
+            fi
+        fi
+        ;;
+    *)
+        echo -e "\033[0;36m👋 安全退出面板。\033[0m" && exit 0
+        ;;
+esac
+
+sleep 1
+show-nodes
+PORTPANEL
+chmod +x /usr/local/bin/port
+
+# 首次自动呼出专属面板快照
 show-nodes
 EOF
 chmod +x install_max_matrix.sh
