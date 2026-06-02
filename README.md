@@ -12,9 +12,13 @@
 ```bash
 bash <(curl -Ls [https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh](https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
 
+---
+
 ### 🌐 国际直连拉起（海外小鸡直连）
+```bash
 bash <(curl -Ls [https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh](https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh))
 
+---
 ### 🛠️ 核心日常管理命令
 ​安装完成后，在终端里使用以下命令进行日常维护：
 ​核心五协议状态自检：systemctl status sing-box
@@ -22,5 +26,7 @@ bash <(curl -Ls [https://raw.githubusercontent.com/aapph/my-tools/refs/heads/mai
 ​临时测试隧道状态监控：systemctl status cloudflared
 ​一键重启整个网络矩阵：systemctl restart sing-box cloudflared cloudflared-zt
 
+---
 ​### 🧹 一键卸载脚本
+```bash
 bash <(curl -Ls [https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh](https://ghproxy.com/https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh))
