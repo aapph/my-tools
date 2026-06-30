@@ -13,7 +13,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 ```
 或
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-1)
+bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-1.sh)
 ```
 ---
 ### 🛠️ 日常管理命令
