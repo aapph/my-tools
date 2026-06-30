@@ -11,6 +11,11 @@
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh)
 ```
+或
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-1)
+```
 ---
 ### 🛠️ 日常管理命令
 ​安装完成后，在终端里使用以下命令进行日常维护：
