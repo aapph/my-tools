@@ -32,14 +32,14 @@ RANDOM_VLESS_DEFAULT=$(( (RANDOM % 30000) + 20000 ))
 read -p "👉 1. VLESS Reality 端口 (回车随机生成，建议直连协议不要用8443/2053等CDN常用端口): " PORT_VLESS
 PORT_VLESS=${PORT_VLESS:-$RANDOM_VLESS_DEFAULT}
 
-read -p "👉 2. Hysteria 2 端口 (默认: 9443): " PORT_HY2
-PORT_HY2=${PORT_HY2:-9443}
+read -p "👉 2. Hysteria 2 端口 (默认: 9088): " PORT_HY2
+PORT_HY2=${PORT_HY2:-9088}
 
-read -p "👉 3. TUIC v5 端口 (默认: 10443): " PORT_TUIC
-PORT_TUIC=${PORT_TUIC:-10443}
+read -p "👉 3. TUIC v5 端口 (默认: 10688): " PORT_TUIC
+PORT_TUIC=${PORT_TUIC:-10688}
 
-read -p "👉 4. Trojan 端口 (默认: 11443): " PORT_TROJAN
-PORT_TROJAN=${PORT_TROJAN:-11443}
+read -p "👉 4. Trojan 端口 (默认: 21868): " PORT_TROJAN
+PORT_TROJAN=${PORT_TROJAN:-21868}
 
 read -p "👉 5. VMess 本地转发端口 (默认: 8080): " PORT_VMESS
 PORT_VMESS=${PORT_VMESS:-8080}
@@ -123,7 +123,7 @@ if [ -z "$PRIV_KEY" ]; then
     PUB_KEY="x_Xn8H6_WvZV-qX-74V2_Hw0Z8H6FfR8yE5C-d8I3b0E="
 fi
 
-openssl req -x509 -nodes -newkey rsa:2048 -keyout /etc/sing-box/server.key -out /etc/sing-box/server.crt -subj "/CN=www.microsoft.com" -days 36500 2>/dev/null
+openssl req -x509 -nodes -newkey rsa:2048 -keyout /etc/sing-box/server.key -out /etc/sing-box/server.crt -subj "/CN=www.bing.com" -days 36500 2>/dev/null
 
 # 将自定义端口、Token和元数据固化到本地，供后期面板随时提取修改
 cat << METEOF > /etc/sing-box/meta_env.sh
@@ -152,8 +152,8 @@ cat << JSONEOF > /etc/sing-box/config.json
       "type": "vless", "tag": "vless-reality-in", "listen": "::", "listen_port": ${PORT_VLESS},
       "users": [ { "uuid": "${UUID}", "flow": "xtls-rprx-vision" } ],
       "tls": {
-        "enabled": true, "server_name": "www.microsoft.com",
-        "reality": { "enabled": true, "handshake": { "server": "www.microsoft.com", "server_port": 443 }, "private_key": "${PRIV_KEY}", "short_id": [ "${SUID}" ] }
+        "enabled": true, "server_name": "www.bing.com",
+        "reality": { "enabled": true, "handshake": { "server": "www.bing.com", "server_port": 443 }, "private_key": "${PRIV_KEY}", "short_id": [ "${SUID}" ] }
       }
     },
     {
@@ -164,12 +164,12 @@ cat << JSONEOF > /etc/sing-box/config.json
     {
       "type": "tuic", "tag": "tuic5-in", "listen": "::", "listen_port": ${PORT_TUIC},
       "users": [ { "uuid": "${UUID}", "password": "${UUID}" } ],
-      "tls": { "enabled": true, "server_name": "www.microsoft.com", "certificate_path": "/etc/sing-box/server.crt", "key_path": "/etc/sing-box/server.key" }
+      "tls": { "enabled": true, "server_name": "www.bing.com", "certificate_path": "/etc/sing-box/server.crt", "key_path": "/etc/sing-box/server.key" }
     },
     {
       "type": "trojan", "tag": "trojan-in", "listen": "::", "listen_port": ${PORT_TROJAN},
       "users": [ { "password": "${UUID}" } ],
-      "tls": { "enabled": true, "server_name": "www.microsoft.com", "certificate_path": "/etc/sing-box/server.crt", "key_path": "/etc/sing-box/server.key" }
+      "tls": { "enabled": true, "server_name": "www.bing.com", "certificate_path": "/etc/sing-box/server.crt", "key_path": "/etc/sing-box/server.key" }
     },
     {
       "type": "vmess", "tag": "vmess-ws-in", "listen": "::", "listen_port": ${PORT_VMESS},
@@ -305,27 +305,27 @@ echo -e "--------------------------------------------------"
 echo -e "ℹ️  通用密码/UUID: \033[0;32m${UUID}\033[0m"
 echo -e "--------------------------------------------------"
 echo -e "1️⃣  VLESS Reality 节点:"
-echo -e " 👉 IPv4: \033[0;33mvless://${UUID}@${IP4}:${PORT_VLESS}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v4-Reality\033[0m"
+echo -e " 👉 IPv4: \033[0;33mvless://${UUID}@${IP4}:${PORT_VLESS}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.bing.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v4-Reality\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mvless://${UUID}@[${IP6}]:${PORT_VLESS}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.microsoft.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v6-Reality\033[0m"
+echo -e " 👉 IPv6: \033[0;33mvless://${UUID}@[${IP6}]:${PORT_VLESS}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.bing.com&fp=chrome&pbk=${PUB_KEY}&sid=${SUID}&type=tcp#Max-v6-Reality\033[0m"
 fi
 echo -e ""
 echo -e "2️⃣  Hysteria 2 节点:"
-echo -e " 👉 IPv4: \033[0;33mhy2://${UUID}@${IP4}:${PORT_HY2}?insecure=1&sni=www.microsoft.com#Max-v4-Hy2\033[0m"
+echo -e " 👉 IPv4: \033[0;33mhy2://${UUID}@${IP4}:${PORT_HY2}?insecure=1&sni=www.bing.com#Max-v4-Hy2\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mhy2://${UUID}@[${IP6}]:${PORT_HY2}?insecure=1&sni=www.microsoft.com#Max-v6-Hy2\033[0m"
+echo -e " 👉 IPv6: \033[0;33mhy2://${UUID}@[${IP6}]:${PORT_HY2}?insecure=1&sni=www.bing.com#Max-v6-Hy2\033[0m"
 fi
 echo -e ""
 echo -e "3️⃣  TUIC v5 节点 (客户端清空 ALPN):"
-echo -e " 👉 IPv4: \033[0;33mtuic://${UUID}:${UUID}@${IP4}:${PORT_TUIC}?congestion_control=bbr&sni=www.microsoft.com&allow_insecure=1#Max-v4-TUIC5\033[0m"
+echo -e " 👉 IPv4: \033[0;33mtuic://${UUID}:${UUID}@${IP4}:${PORT_TUIC}?congestion_control=bbr&sni=www.bing.com&allow_insecure=1#Max-v4-TUIC5\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mtuic://${UUID}:${UUID}@[${IP6}]:${PORT_TUIC}?congestion_control=bbr&sni=www.microsoft.com&allow_insecure=1#Max-v6-TUIC5\033[0m"
+echo -e " 👉 IPv6: \033[0;33mtuic://${UUID}:${UUID}@[${IP6}]:${PORT_TUIC}?congestion_control=bbr&sni=www.bing.com&allow_insecure=1#Max-v6-TUIC5\033[0m"
 fi
 echo -e ""
 echo -e "4️⃣  Trojan 节点 (客户端清空 ALPN 且允许不安全证书):"
-echo -e " 👉 IPv4: \033[0;33mtrojan://${UUID}@${IP4}:${PORT_TROJAN}?peer=www.microsoft.com&sni=www.microsoft.com&allowInsecure=1#Max-v4-Trojan\033[0m"
+echo -e " 👉 IPv4: \033[0;33mtrojan://${UUID}@${IP4}:${PORT_TROJAN}?peer=www.bing.com&sni=www.bing.com&allowInsecure=1#Max-v4-Trojan\033[0m"
 if [ -n "$IP6" ]; then
-echo -e " 👉 IPv6: \033[0;33mtrojan://${UUID}@[${IP6}]:${PORT_TROJAN}?peer=www.microsoft.com&sni=www.microsoft.com&allowInsecure=1#Max-v6-Trojan\033[0m"
+echo -e " 👉 IPv6: \033[0;33mtrojan://${UUID}@[${IP6}]:${PORT_TROJAN}?peer=www.bing.com&sni=www.bing.com&allowInsecure=1#Max-v6-Trojan\033[0m"
 fi
 echo -e ""
 echo -e "5️⃣  VMess 隧道节点输出区："
