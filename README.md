@@ -3,8 +3,8 @@
 
 ---
 ### 🚀 注意事项
-使用vmess/vless固定隧道，需提前在cloudflare的zero trust创建好隧道，获取隧道token以及绑定的隧道域名。两隧道协议可以共用一个token，但需在当前隧道下创建绑定两个隧道域名，需在CF Zero Trust后台为该Tunnel添加两条Public Hostname分别指向http://localhost:8080（vmess隧道默认端口）和http://localhost:8880（vless隧道默认端口），
-隧道端口可以自定义。执行脚本需要填token和隧道域名两个参数，填完参数回车就是生成vmess/vless临时/固定双隧道共存。两个参数为选填项，不填直接回车就是单独生成vmess/vless临时隧道。
+使用vmess/vless固定隧道，需提前在cloudflare的zero trust创建好隧道，获取隧道token以及绑定的隧道域名。两隧道协议可以共用一个token，但需在当前隧道下创建绑定两个隧道域名，需在CF Zero Trust后台为该Tunnel添加两条Public Hostname分别指向http://localhost:8080（vmess隧道默认端口）和http://localhost:8880（vless隧道默认端口），隧道端口可以自定义。
+执行脚本需要填token和隧道域名两个参数，填完参数回车就是生成vmess/vless临时/固定双隧道共存。两个参数为选填项，不填直接回车就是单独生成vmess/vless临时隧道。
 
 使用vmess-ws-tls或vless-ws-tls协议，需提前在Cloudflare后台对托管域名添加一个A或AAAA记录，指向VPS的IP，并保持开启"橙云"（已代理）状态，这样 Cloudflare才会在你选的那个端口上做边缘转发，从而实现优选IP/优选域名加速套CDN的效果。
 
