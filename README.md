@@ -9,14 +9,19 @@
 使用vmess-ws-tls或vless-ws-tls协议，需提前在Cloudflare后台对托管域名添加一个A或AAAA记录，指向VPS的IP，并保持开启"橙云"（已代理）状态，这样 Cloudflare才会在你选的那个端口上做边缘转发，从而实现优选IP/优选域名加速套CDN的效果。
 
 ---
-### 🚀 一键六协议安装脚本
-直接复制命令并在VPS 终端（Root 用户）中运行即可：
+### 🚀 一键安装脚本
+复制命令并在VPS终端(Root用户)中运行：
+六协议：
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh)
 ```
 或
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-1.sh)
+```
+兼容Nat-VPS： 
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-nat.sh)
 ```
 ---
 ### 🛠️ 日常管理命令
@@ -47,7 +52,7 @@ systemctl status cloudflared
 systemctl restart sing-box cloudflared cloudflared-zt
 ```
 ---
-### 🧹 一键六协议卸载脚本
+### 🧹 一键卸载脚本
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/clean.sh)
 ```
