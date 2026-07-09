@@ -10,7 +10,7 @@
 
 ---
 ### 🚀 一键安装脚本
-复制命令并在VPS终端(Root用户)中运行：
+复制命令并在VPS终端(root用户)中运行：
 
 七协议：
 ```bash
@@ -20,13 +20,13 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-1.sh)
 ```
-兼容Nat-VPS： 
+兼容Nat-VPS四协议： 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-nat.sh)
 ```
 ---
 ### 🛠️ 日常管理命令
-​安装完成后，在终端里使用以下命令进行日常维护：
+​常规VPS，在终端里使用以下命令进行日常维护：
 
 重新查看五个节点信息，VPS终端输入：
 ```
@@ -51,6 +51,10 @@ systemctl status cloudflared
 ​一键重启整个网络矩阵：
 ```
 systemctl restart sing-box cloudflared cloudflared-zt
+```
+Nat-VPS，在终端输入以下命令进行日常维护：
+```
+node
 ```
 ---
 ### 🧹 一键卸载脚本
