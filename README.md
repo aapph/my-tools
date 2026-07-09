@@ -28,7 +28,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 ### 🛠️ 日常管理命令
 ​常规VPS，在终端里使用以下命令进行日常维护：
 
-重新查看节点信息，VPS终端输入：
+查看节点信息，VPS终端输入：
 ```
 show-nodes
 ```
@@ -52,7 +52,8 @@ systemctl status cloudflared
 ```
 systemctl restart sing-box cloudflared cloudflared-zt
 ```
-Nat-VPS，在终端输入以下命令进行日常维护：
+
+兼容Nat-VPS，在终端输入以下命令进行日常维护。输入命令后，可在管理面板查看节点信息/修改节点信息/卸载脚本等：
 ```
 node
 ```
