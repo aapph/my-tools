@@ -1,5 +1,5 @@
 ### 👑 科学上网终极核心矩阵
-本项目经过AI号称的骨灰级调优，包含**完美双栈 + 六协议矩阵 + vmess/vless-临时/固定双隧道共存**的完全体一键六协议脚本。六协议分别为VMess/Vless-临时/固定隧道、vmess-ws-tls/vless-ws-tls(使用CF的五个https端口，可套CDN，例2096端口)、VLESS-reality、Trojan、Hysteria2、Tuic。一键脚本经过AI多轮辅助调试聚合，专为低配 VPS（如GCP/AWS等免费小鸡）打造，轻量、稳定、隐蔽。
+本项目经过AI号称的骨灰级调优，包含**完美双栈 + 七协议矩阵 + vmess/vless-临时/固定双隧道共存**的完全体一键六协议脚本。六协议分别为VMess/Vless-临时/固定隧道、vmess-ws-tls/vless-ws-tls(使用CF的五个https端口，可套CDN，例2096端口)、VLESS-reality、Trojan、Hysteria2、Tuic。一键脚本经过AI多轮辅助调试聚合，专为低配 VPS（如GCP/AWS等免费小鸡）打造，轻量、稳定、隐蔽。
 
 ---
 ### 🚀 注意事项
@@ -11,11 +11,12 @@
 ---
 ### 🚀 一键安装脚本
 复制命令并在VPS终端(Root用户)中运行：
-六协议：
+
+七协议：
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install.sh)
 ```
-或
+五协议：
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-1.sh)
 ```
