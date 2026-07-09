@@ -20,7 +20,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-1.sh)
 ```
-兼容Nat-VPS四协议： 
+兼容NAT-VPS四协议： 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/refs/heads/main/install-nat.sh)
 ```
@@ -53,7 +53,7 @@ systemctl status cloudflared
 systemctl restart sing-box cloudflared cloudflared-zt
 ```
 
-兼容Nat-VPS，在终端输入以下命令进行日常维护。输入命令后，可在管理面板查看节点信息/修改节点信息/卸载脚本等：
+兼容NAT-VPS，在终端输入以下命令进行日常维护。输入命令后，可在管理面板查看节点信息/修改节点信息/卸载脚本等：
 ```
 node
 ```
