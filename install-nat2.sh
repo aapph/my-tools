@@ -177,51 +177,72 @@ CDN_PATH_IN=""
 echo ""
 echo -e "${BLD}──── 步骤 4/4 : 下载安装 ────${NC}"
 
+mkdir -p /usr/local/bin
+
 # sing-box 官方发布的是静态编译的 Go 二进制，musl(Alpine) / glibc(Debian) 通用，无需区分下载包
 SB_VER="1.13.14"
 SB_PKG="sing-box-${SB_VER}-linux-amd64.tar.gz"
 SB_BIN="sing-box-${SB_VER}-linux-amd64/sing-box"
-info "[1/4] 流式下载 sing-box（wget|tar 管道，不落临时文件）..."
+info "[1/4] 下载 sing-box..."
 rm -f /usr/local/bin/sing-box
+TMP=/tmp/sb.tar.gz
 DL=0
 for url in \
     "https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}" \
     "https://ghp.ci/https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}" \
     "https://ghproxy.com/https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}" \
-    "https://mirror.ghproxy.com/https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}"; do
+    "https://mirror.ghproxy.com/https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}" \
+    "https://gh-proxy.com/https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}"; do
     info "  尝试: $url"
-    if wget -q --tries=2 --timeout=60 -O- "$url" 2>/dev/null \
-        | tar -zxf- -C /usr/local/bin --strip-components=1 "$SB_BIN" 2>/dev/null; then
+    rm -f "$TMP"
+    wget -q --tries=2 --timeout=60 "$url" -O "$TMP" 2>/dev/null
+    # 关键修复：不能只看文件"有没有内容"，很多镜像失败时会返回一个几十字节的
+    # 报错/限流网页，文件非空但根本不是有效的 gzip 包，之前脚本没检查这个，
+    # 导致"下载成功"但解压出来的东西是空的，二进制根本不存在。
+    if [ -s "$TMP" ] && gzip -t "$TMP" 2>/dev/null && tar -tzf "$TMP" "$SB_BIN" >/dev/null 2>&1; then
         DL=1; break
+    else
+        warn "  该镜像返回内容无效（非 gzip 包或缺少目标文件），换下一个"
     fi
 done
 if [ "$DL" -eq 0 ]; then
-    warn "管道模式失败，改用磁盘缓存..."
-    TMP=/tmp/sb.tar.gz
-    for url in \
-        "https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}" \
-        "https://ghp.ci/https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}" \
-        "https://ghproxy.com/https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}"; do
-        wget -q --tries=2 --timeout=90 "$url" -O "$TMP" 2>/dev/null && [ -s "$TMP" ] && break; rm -f "$TMP"
-    done
-    [ -s "$TMP" ] || die "所有镜像下载失败"
-    tar -zxf "$TMP" -C /usr/local/bin --strip-components=1 "$SB_BIN"; rm -f "$TMP"
+    die "sing-box 所有镜像下载失败（可能是本机无法访问 GitHub 及其镜像站）。
+      请手动执行以下命令下载并放到 /usr/local/bin/sing-box 后重新运行本脚本：
+      wget -O /tmp/sb.tar.gz https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${SB_PKG}"
 fi
+tar -zxf "$TMP" -C /usr/local/bin --strip-components=1 "$SB_BIN" || die "解压 sing-box 失败，压缩包可能已损坏"
+rm -f "$TMP"
 chmod +x /usr/local/bin/sing-box
-ok "sing-box 安装完成"
+if [ -x /usr/local/bin/sing-box ] && /usr/local/bin/sing-box version >/dev/null 2>&1; then
+    ok "sing-box 安装完成：$(/usr/local/bin/sing-box version 2>/dev/null | head -n1)"
+else
+    die "sing-box 二进制解压后无法执行（架构不匹配或文件损坏），请检查后重试"
+fi
 
 info "[2/4] 下载 cloudflared..."
 CF_OK=0
+rm -f /usr/local/bin/cloudflared
 for url in \
     "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" \
     "https://ghp.ci/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" \
-    "https://ghproxy.com/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"; do
-    wget -q --tries=2 --timeout=90 "$url" -O /usr/local/bin/cloudflared 2>/dev/null \
-        && [ -s /usr/local/bin/cloudflared ] && { CF_OK=1; break; }
+    "https://ghproxy.com/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" \
+    "https://gh-proxy.com/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"; do
     rm -f /usr/local/bin/cloudflared
+    wget -q --tries=2 --timeout=90 "$url" -O /usr/local/bin/cloudflared 2>/dev/null
+    if [ -s /usr/local/bin/cloudflared ]; then
+        chmod +x /usr/local/bin/cloudflared
+        # 同样验证：能跑起来 --version 才算数，防止拿到一个错误页面当二进制用
+        if /usr/local/bin/cloudflared --version >/dev/null 2>&1; then
+            CF_OK=1; break
+        fi
+    fi
 done
-[ "$CF_OK" -eq 1 ] && { chmod +x /usr/local/bin/cloudflared; ok "cloudflared 安装完成"; } \
-    || warn "cloudflared 下载失败，VMess Argo 暂不可用"
+if [ "$CF_OK" -eq 1 ]; then
+    ok "cloudflared 安装完成"
+else
+    rm -f /usr/local/bin/cloudflared
+    warn "cloudflared 下载失败或二进制不可执行，VMess Argo 暂不可用（不影响 TUIC/Reality/CDN 节点）"
+fi
 
 info "[3/4] 生成密钥..."
 mkdir -p /etc/sing-box
