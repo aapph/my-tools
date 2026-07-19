@@ -179,10 +179,23 @@ echo -e "${BLD}──── 步骤 4/4 : 下载安装 ────${NC}"
 
 mkdir -p /usr/local/bin
 
+# ---------- CPU 架构探测 ----------
+# 之前的版本硬编码只下载 amd64，如果 VPS 实际是 ARM(常见于很多便宜 NAT/LXC/OpenVZ
+# 机型)，装上的 amd64 二进制会"解压成功但无法执行"，报 exec format error。
+UNAME_M=$(uname -m)
+case "$UNAME_M" in
+    x86_64|amd64)        SB_ARCH="amd64"; CF_ARCH="amd64";;
+    aarch64|arm64)       SB_ARCH="arm64"; CF_ARCH="arm64";;
+    armv7l|armv6l|armhf) SB_ARCH="armv7"; CF_ARCH="arm";;
+    i386|i686)           SB_ARCH="386";   CF_ARCH="386";;
+    *) die "无法识别的 CPU 架构: ${UNAME_M}，sing-box/cloudflared 官方发行版可能没有对应版本，请手动确认后处理";;
+esac
+info "CPU 架构: ${UNAME_M} → sing-box:${SB_ARCH}  cloudflared:${CF_ARCH}"
+
 # sing-box 官方发布的是静态编译的 Go 二进制，musl(Alpine) / glibc(Debian) 通用，无需区分下载包
 SB_VER="1.13.14"
-SB_PKG="sing-box-${SB_VER}-linux-amd64.tar.gz"
-SB_BIN="sing-box-${SB_VER}-linux-amd64/sing-box"
+SB_PKG="sing-box-${SB_VER}-linux-${SB_ARCH}.tar.gz"
+SB_BIN="sing-box-${SB_VER}-linux-${SB_ARCH}/sing-box"
 info "[1/4] 下载 sing-box..."
 rm -f /usr/local/bin/sing-box
 TMP=/tmp/sb.tar.gz
@@ -223,10 +236,10 @@ info "[2/4] 下载 cloudflared..."
 CF_OK=0
 rm -f /usr/local/bin/cloudflared
 for url in \
-    "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" \
-    "https://ghp.ci/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" \
-    "https://ghproxy.com/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" \
-    "https://gh-proxy.com/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"; do
+    "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}" \
+    "https://ghp.ci/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}" \
+    "https://ghproxy.com/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}" \
+    "https://gh-proxy.com/https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}"; do
     rm -f /usr/local/bin/cloudflared
     wget -q --tries=2 --timeout=90 "$url" -O /usr/local/bin/cloudflared 2>/dev/null
     if [ -s /usr/local/bin/cloudflared ]; then
