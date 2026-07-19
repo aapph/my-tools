@@ -24,6 +24,11 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install-1.
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install-nat.sh)
 ```
+或
+```bash
+bash <(curl -Ls
+https://raw.githubusercontent.com/aapph/my-tools/main/install-nat2.sh)
+```
 ---
 ### 🛠️ 日常管理命令
 ​常规VPS，在终端里使用以下命令进行日常维护：
