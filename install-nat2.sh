@@ -77,9 +77,11 @@ info "系统识别: OS=${OS_FAMILY}  初始化系统=${INIT_SYS}"
 # ---------- 依赖安装（区分包管理器） ----------
 install_deps(){
     if [ "$OS_FAMILY" = alpine ]; then
-        info "Alpine: 通过 apk 安装/校准依赖(强制安装完整版 wget/curl，避免 busybox 精简版参数不兼容)..."
+        info "Alpine: 通过 apk 安装/校准依赖(强制安装完整版 wget/curl，避免 busybox 精简版参数不兼容；" \
+             "同时安装 gcompat/libc6-compat，因为 sing-box/cloudflared 官方发行的 amd64 二进制是" \
+             "动态链接 glibc 的，musl 系统不装这个兼容层会报'No such file or directory')..."
         apk update -q >/dev/null 2>&1
-        apk add --no-cache wget curl openssl tar iproute2 ca-certificates coreutils procps openrc >/dev/null 2>&1
+        apk add --no-cache wget curl openssl tar iproute2 ca-certificates coreutils procps openrc gcompat libc6-compat >/dev/null 2>&1
         rm -rf /var/cache/apk/* 2>/dev/null || true
     else
         local missing=""
@@ -226,10 +228,22 @@ fi
 tar -zxf "$TMP" -C /usr/local/bin --strip-components=1 "$SB_BIN" || die "解压 sing-box 失败，压缩包可能已损坏"
 rm -f "$TMP"
 chmod +x /usr/local/bin/sing-box
+if ! /usr/local/bin/sing-box version >/dev/null 2>&1 && [ "$OS_FAMILY" = alpine ]; then
+    # Alpine 是 musl libc，官方发行的 amd64 二进制是动态链接 glibc 的，
+    # 缺少 gcompat 兼容层时会报"No such file or directory"。这里补装一次再重试。
+    warn "sing-box 首次执行失败，尝试补装 glibc 兼容层(gcompat)后重试..."
+    apk add --no-cache gcompat libc6-compat >/dev/null 2>&1
+fi
 if [ -x /usr/local/bin/sing-box ] && /usr/local/bin/sing-box version >/dev/null 2>&1; then
     ok "sing-box 安装完成：$(/usr/local/bin/sing-box version 2>/dev/null | head -n1)"
 else
-    die "sing-box 二进制解压后无法执行（架构不匹配或文件损坏），请检查后重试"
+    if [ "$OS_FAMILY" = alpine ]; then
+        die "sing-box 二进制无法执行。已尝试安装 gcompat 仍失败，请手动执行
+      apk add gcompat libc6-compat && /usr/local/bin/sing-box version
+      查看具体报错（常见于 Alpine musl 缺少 glibc 兼容层，或该 Alpine 版本仓库没有 gcompat 包）"
+    else
+        die "sing-box 二进制解压后无法执行（架构不匹配或文件损坏），请检查后重试"
+    fi
 fi
 
 info "[2/4] 下载 cloudflared..."
