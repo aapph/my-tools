@@ -26,8 +26,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install-na
 ```
 或
 ```bash
-bash <(curl -Ls
-https://raw.githubusercontent.com/aapph/my-tools/main/install-nat2.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install-nat2.sh)
 ```
 ---
 ### 🛠️ 日常管理命令
