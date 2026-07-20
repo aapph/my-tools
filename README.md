@@ -20,17 +20,17 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install.sh
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install-1.sh)
 ```
-兼容NAT-VPS四协议： 
+兼容Debian和Ubuntu系统-NAT-VPS四协议： 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install-nat.sh)
 ```
-或
+兼容Alpine系统-NAT-VPS四协议：
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/install-nat2.sh)
 ```
 ---
 ### 🛠️ 日常管理命令
-​常规VPS，在终端里使用以下命令进行日常维护：
+​常规VPS，在终端里使用以下令进行日常维护：
 
 查看节点信息，VPS终端输入：
 ```
