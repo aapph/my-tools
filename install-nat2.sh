@@ -362,10 +362,11 @@ mkdir -p /var/log
 
 if [ "$INIT_SYS" = openrc ]; then
     # ---------- Alpine / OpenRC ----------
-    # 说明：不用 supervisor=supervise-daemon，因为部分精简 LXC/OpenVZ Alpine 模板
-    # 里 supervise-daemon 的运行环境(cgroup/挂载)不完整，会导致服务"看起来启动了
-    # 但实际没跑起来"且几乎不报错。改用最基础、兼容性最好的 command_background
-    # 方式，任何 OpenRC 版本、任何容器类型都能正常工作。
+    # 说明：supervise-daemon 在部分精简容器环境里状态记录会卡死("already
+    # running" 但实际进程根本不存在，且清不掉)，比较不可靠。改回最基础、
+    # 兼容性最好的 command_background 方式来启动，"自动重启"这件事改交给
+    # 后面单独设置的 crond 看门狗脚本（每分钟检查一次，进程不在了就拉起来），
+    # 两边职责拆开，任何一边有问题都不会互相拖累。
     cat > /etc/init.d/sing-box << 'SVCEOF'
 #!/sbin/openrc-run
 name="sing-box"
@@ -383,7 +384,11 @@ depend() {
 SVCEOF
     chmod +x /etc/init.d/sing-box
     rc-update add sing-box default >/dev/null 2>&1
-    rc-service sing-box restart >/dev/null 2>&1
+    rc-service sing-box stop >/dev/null 2>&1
+    pkill -9 -f "/usr/local/bin/sing-box" >/dev/null 2>&1
+    rm -f /run/sing-box.pid 2>/dev/null
+    rc-service sing-box zap >/dev/null 2>&1
+    rc-service sing-box start >/dev/null 2>&1
     sleep 1
     if pgrep -f "/usr/local/bin/sing-box run" >/dev/null 2>&1; then
         ok "sing-box 已启动"
@@ -413,25 +418,30 @@ fi
 
 if [ -n "$CF_TOKEN" ] && [ -f /usr/local/bin/cloudflared ]; then
     if [ "$INIT_SYS" = openrc ]; then
-        cat > /etc/init.d/cloudflared << CFSEOF
-#!/sbin/openrc-run
-name="cloudflared"
-description="cloudflared tunnel"
-command="/usr/local/bin/cloudflared"
-command_args="tunnel --no-autoupdate run --token ${CF_TOKEN}"
-command_background="yes"
-output_log="/var/log/cloudflared.log"
-error_log="/var/log/cloudflared.log"
-pidfile="/run/\${RC_SVC_NAME}.pid"
-
-depend() {
-    need net
-}
-CFSEOF
-        chmod +x /etc/init.d/cloudflared
-        rc-update add cloudflared default >/dev/null 2>&1
-        rc-service cloudflared restart >/dev/null 2>&1
+        # 不再用 /etc/init.d/cloudflared + rc-service：这套在部分精简容器
+        # 环境里，OpenRC 自带的进程检测会认死理，误判"已经在运行"（很可能是
+        # 通过 /proc/*/exe 匹配到某个异常/僵尸进程，而不是靠命令行匹配，
+        # 所以连 pkill -f、rm pidfile、zap 这些手段都清不掉）。改用最原始的
+        # nohup 后台启动方式，完全绕开 OpenRC 的进程跟踪逻辑；配合下面的
+        # crond 看门狗（用 pgrep 判活，这个是准的）做自动重启。
+        rm -f /etc/init.d/cloudflared 2>/dev/null
+        cat > /usr/local/bin/cloudflared-start.sh << 'CFSTARTEOF'
+#!/bin/sh
+CONF=/etc/sing-box/node.conf
+[ -f "$CONF" ] || exit 0
+CF_TOKEN=$(grep '^CF_TOKEN=' "$CONF" | cut -d= -f2-)
+[ -z "$CF_TOKEN" ] && exit 0
+[ -x /usr/local/bin/cloudflared ] || exit 0
+pgrep -f "/usr/local/bin/cloudflared tunnel" >/dev/null 2>&1 && exit 0
+nohup /usr/local/bin/cloudflared tunnel --no-autoupdate run --token "$CF_TOKEN" >> /var/log/cloudflared.log 2>&1 &
+disown 2>/dev/null
+exit 0
+CFSTARTEOF
+        chmod +x /usr/local/bin/cloudflared-start.sh
+        pkill -9 -f "/usr/local/bin/cloudflared" >/dev/null 2>&1
         sleep 1
+        /usr/local/bin/cloudflared-start.sh
+        sleep 2
         if pgrep -f "/usr/local/bin/cloudflared tunnel" >/dev/null 2>&1; then
             ok "cloudflared 已启动"
         else
@@ -453,6 +463,27 @@ CFSEOF
         systemctl enable cloudflared>/dev/null 2>&1
         systemctl restart cloudflared && ok "cloudflared 已启动" || warn "cloudflared 启动失败"
     fi
+fi
+
+# ---------- Alpine 看门狗：每分钟检查一次，进程不在了就自动拉起 ----------
+# (Debian/Ubuntu 用的是 systemd 的 Restart=on-failure，已经自带自动重启，不需要这个)
+if [ "$INIT_SYS" = openrc ]; then
+    info "配置 crond 看门狗（每分钟自愈检查）..."
+    apk add --no-cache busybox-openrc >/dev/null 2>&1
+    cat > /usr/local/bin/nat-watchdog.sh << 'WDEOF'
+#!/bin/sh
+[ -x /usr/local/bin/sing-box ] && ! pgrep -f "/usr/local/bin/sing-box run" >/dev/null 2>&1 \
+    && rc-service sing-box start >/dev/null 2>&1
+[ -x /usr/local/bin/cloudflared-start.sh ] && /usr/local/bin/cloudflared-start.sh >/dev/null 2>&1
+exit 0
+WDEOF
+    chmod +x /usr/local/bin/nat-watchdog.sh
+    mkdir -p /etc/crontabs
+    ( crontab -l -u root 2>/dev/null | grep -v nat-watchdog.sh; \
+      echo "* * * * * /usr/local/bin/nat-watchdog.sh >/dev/null 2>&1" ) | crontab -u root - 2>/dev/null
+    rc-update add crond default >/dev/null 2>&1
+    rc-service crond start >/dev/null 2>&1 || rc-service crond restart >/dev/null 2>&1
+    ok "看门狗已启用：sing-box/cloudflared 掉线会在1分钟内自动拉起"
 fi
 
 cat > /usr/local/bin/node << 'PANELEOF'
@@ -477,16 +508,30 @@ if [ -z "$INIT_SYS" ]; then
 fi
 
 svc_restart(){
-    if [ "$INIT_SYS" = openrc ]; then rc-service "$1" restart >/dev/null 2>&1
-    else systemctl restart "$1" >/dev/null 2>&1
+    if [ "$1" = cloudflared ]; then
+        pkill -9 -f "/usr/local/bin/cloudflared" >/dev/null 2>&1
+        sleep 1
+        [ -x /usr/local/bin/cloudflared-start.sh ] && /usr/local/bin/cloudflared-start.sh >/dev/null 2>&1
+        return
+    fi
+    if [ "$INIT_SYS" = openrc ]; then
+        # 先 stop 再清理可能残留的 pidfile/状态标记，最后 start，避免
+        # 进程管理误判"已经在运行"而拒绝启动的僵尸状态问题
+        rc-service "$1" stop >/dev/null 2>&1
+        pkill -9 -f "/usr/local/bin/$1" >/dev/null 2>&1
+        rm -f "/run/$1.pid" 2>/dev/null
+        rc-service "$1" zap >/dev/null 2>&1
+        rc-service "$1" start >/dev/null 2>&1
+    else
+        systemctl restart "$1" >/dev/null 2>&1
     fi
 }
 svc_is_active(){
     # 用真实进程存在与否做最终判断，比 rc-service/systemctl 自己的状态位更可靠
-    # （容器环境里 supervise 记录的状态有时会跟实际进程情况对不上）
+    # （容器环境里进程管理记录的状态有时会跟实际进程情况对不上）
     case "$1" in
-        sing-box)    pgrep -f "/usr/local/bin/sing-box run" >/dev/null 2>&1 && return 0;;
-        cloudflared) pgrep -f "/usr/local/bin/cloudflared tunnel" >/dev/null 2>&1 && return 0;;
+        sing-box)    pgrep -f "/usr/local/bin/sing-box run" >/dev/null 2>&1 && return 0 || return 1;;
+        cloudflared) pgrep -f "/usr/local/bin/cloudflared tunnel" >/dev/null 2>&1 && return 0 || return 1;;
     esac
     if [ "$INIT_SYS" = openrc ]; then
         rc-service "$1" status 2>/dev/null | grep -q started
@@ -637,10 +682,11 @@ _uninstall(){
     ask "输入 yes 确认: " C; [ "$C" = "yes" ]||{ echo 已取消; return; }
     if [ "$INIT_SYS" = openrc ]; then
         rc-service sing-box stop 2>/dev/null||true
-        rc-service cloudflared stop 2>/dev/null||true
         rc-update del sing-box default 2>/dev/null||true
-        rc-update del cloudflared default 2>/dev/null||true
-        rm -f /etc/init.d/sing-box /etc/init.d/cloudflared
+        rm -f /etc/init.d/sing-box
+        pkill -9 -f "/usr/local/bin/cloudflared" 2>/dev/null||true
+        ( crontab -l -u root 2>/dev/null | grep -v nat-watchdog.sh ) | crontab -u root - 2>/dev/null||true
+        rm -f /usr/local/bin/nat-watchdog.sh /usr/local/bin/cloudflared-start.sh
     else
         systemctl stop sing-box cloudflared 2>/dev/null||true
         systemctl disable sing-box cloudflared 2>/dev/null||true
