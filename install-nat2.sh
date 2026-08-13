@@ -1,7 +1,7 @@
 #!/bin/sh
-# sing-box 极限内存版 - 128MB RAM / 5GB 磁盘 / NAT VPS
+# sing-box 极限内存版 - 128MB RAM / 5GB 磁盘 / NAT VP
 # 兼容: Debian / Ubuntu (systemd)  &  Alpine (OpenRC + musl + busybox)
-# 引导层用 /bin/sh(POSIX) 写，探测/安装 bash 后再把自己交给 bash 执行，
+# 引导层用 /bin/sh(POSIX) 写，探测/安装 bash 后再把自己交给 bash 执行
 # 这样即使目标机上一开始完全没有 bash 也能跑起来。
 # ------------------------------------------------------------------
 if [ -z "$BASH_VERSION" ]; then
