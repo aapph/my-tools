@@ -68,7 +68,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/clean.sh)
 ```
 ---
 ### 🚀 一键升级singbox内核脚本
-singbox默认内核版本为AI推荐的稳定黄金版v1.9.3，足以满足日常需求。升级内核不保证节点兼容可用。如需升级，可自定义选择自己需要的版本。
+singbox默认内核版本为v1.13.14，足以满足日常需求。如需升级，可自定义选择自己需要的版本。
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/aapph/my-tools/main/update_singbox.sh)
 ```
