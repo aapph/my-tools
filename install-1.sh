@@ -95,17 +95,17 @@ echo "nameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 apt update && apt install uuid-runtime openssl wget curl jq ca-certificates -y 2>/dev/null
 
-# 4. 自动下载官方 1.9.3 二进制核心
+# 4. 自动下载官方 1.13.14 二进制核心
 echo -e "\033[0;33m[1/4] 正在拉取官方预编译核心...\033[0m"
 rm -f /usr/local/bin/sing-box
-wget -q https://github.com/SagerNet/sing-box/releases/download/v1.9.3/sing-box-1.9.3-linux-amd64.tar.gz -O sing-box.tar.gz
+wget -q https://github.com/SagerNet/sing-box/releases/download/v1.13.14/sing-box-1.13.14-linux-amd64.tar.gz -O sing-box.tar.gz
 if [ $? -ne 0 ]; then
-    wget -q https://ghproxy.com/https://github.com/SagerNet/sing-box/releases/download/v1.9.3/sing-box-1.9.3-linux-amd64.tar.gz -O sing-box.tar.gz
+    wget -q https://ghproxy.com/https://github.com/SagerNet/sing-box/releases/download/v1.13.14/sing-box-1.13.14-linux-amd64.tar.gz -O sing-box.tar.gz
 fi
 tar -zxf sing-box.tar.gz
-mv sing-box-1.9.3-linux-amd64/sing-box /usr/local/bin/
+mv sing-box-1.13.14-linux-amd64/sing-box /usr/local/bin/
 chmod +x /usr/local/bin/sing-box
-rm -rf sing-box.tar.gz sing-box-1.9.3-linux-amd64
+rm -rf sing-box.tar.gz sing-box-1.13.14-linux-amd64
 
 # 5. 动态参数计算与证书生成
 mkdir -p /etc/sing-box
